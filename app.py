@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
 import joblib
-from PIL import Image
+import os
+from sklearn.ensemble import RandomForestClassifier
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -10,56 +13,114 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- MODEL LOADING ---
+# --- CACHED FUNCTIONS FOR DATA AND MODEL ---
+
+@st.cache_data
+def load_data(file_path):
+    """Loads data from a CSV file. Cached to prevent reloading."""
+    return pd.read_csv(file_path)
+
+@st.cache_resource
+def train_and_get_model():
+    """
+    This is the key function. It trains the model ONCE and caches it.
+    This guarantees no version mismatch between training and prediction.
+    """
+    # Load the training data
+    try:
+        df_train = load_data('air pollution dataset.csv')
+    except FileNotFoundError:
+        st.error("Training data 'air pollution dataset.csv' not found in the project folder. Cannot build the app.")
+        return None
+
+    # --- Data Prep and Training Logic (from your notebook) ---
+    df_train.columns = df_train.columns.str.replace(' ', '_')
+    
+    # We use the refined features, without the overall AQI_Value
+    features = ['CO_AQI_Value', 'Ozone_AQI_Value', 'NO2_AQI_Value', 'PM2.5_AQI_Value']
+    target = 'AQI_Category'
+    
+    # Important: Drop rows with missing values in the columns we need
+    df_train.dropna(subset=features + [target], inplace=True)
+    
+    X = df_train[features]
+    y = df_train[target]
+    
+    # Create and train the Random Forest model
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    st.info("Training a new classification model... (This will only happen on the first run)")
+    model.fit(X, y)
+    st.success("Model training complete!")
+    
+    return model
+
+# --- Load everything needed for the app ---
 try:
-    model = joblib.load('aqi_category_classifier.joblib')
-except FileNotFoundError:
-    st.error("Model file 'aqi_category_classifier.joblib' not found. Please make sure it's in the correct directory.")
+    df_global = load_data('air pollution dataset.csv')
+    model = train_and_get_model()
+except Exception as e:
+    st.error(f"An error occurred during data loading or model training: {e}")
+    st.stop() # Stop the app if essential components fail to load
+
+if model is None:
     st.stop()
+
 
 # --- SIDEBAR FOR NAVIGATION ---
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Project Overview", "Time-Series Detection", "Interactive AQI Classifier"])
+page = st.sidebar.radio("Go to", ["Project Overview", "Global Pollution Insights", "Interactive AQI Classifier"])
 
+# =====================================================================================
 # --- PAGE 1: PROJECT OVERVIEW ---
+# =====================================================================================
 if page == "Project Overview":
     st.title("💨 Comprehensive Air Pollution Analysis Project")
     st.markdown("---")
     st.subheader("Welcome to my Machine Learning Internship Project!")
-    st.write(
-        "This interactive web app showcases a multi-faceted analysis of air pollution. "
-        "The project is divided into two main parts:"
-    )
-    st.markdown(
-        """
-        1.  **Time-Series Detection:** Analyzing historical data from a single city to detect trends and periods of high pollution.
-        2.  **Interactive AQI Classifier:** Using a global dataset to build a machine learning model that predicts the AQI category based on pollutant levels.
-        """
-    )
+    st.write("This interactive web app showcases an analysis of global air pollution and features an interactive model to predict Air Quality.")
+    st.info("Use the navigation panel on the left to explore the different parts of the project.")
 
-# --- PAGE 2: TIME-SERIES DETECTION ---
-elif page == "Time-Series Detection":
-    st.title("Time-Series Analysis: Detecting High Pollution Periods")
+# =====================================================================================
+# --- PAGE 2: GLOBAL POLLUTION INSIGHTS ---
+# =====================================================================================
+elif page == "Global Pollution Insights":
+    st.title("Global Insights: Comparing Pollution Across Cities")
     st.markdown("---")
-    st.write(
-        "This model uses a **Moving Average Crossover** strategy to identify when pollution is trending higher than its historical norm."
-    )
-    try:
-        image = Image.open('moving_average_plot.png')
-        st.image(image, caption='Moving Average Crossover Detection', use_container_width=True)
-    except FileNotFoundError:
-        st.warning("Plot image 'moving_average_plot.png' not found. Please save the plot from your notebook into the project folder.")
+    st.write("This section uses a global dataset to find pollution hotspots and understand which pollutants are most common.")
+    
+    st.subheader("Top 10 Most Polluted Cities by Average AQI")
+    
+    # --- Top 10 Cities Plot ---
+    fig1, ax1 = plt.subplots(figsize=(10, 6))
+    top_10_polluted_cities = df_global.groupby('City')['AQI Value'].mean().sort_values(ascending=False).head(10)
+    sns.barplot(x=top_10_polluted_cities.values, y=top_10_polluted_cities.index, ax=ax1, palette='plasma')
+    ax1.set_xlabel("Average AQI Value")
+    ax1.set_ylabel("City")
+    st.pyplot(fig1)
 
+    st.subheader("Global Distribution of AQI Categories")
+
+    # --- AQI Category Distribution Plot ---
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    category_order = ['Good', 'Moderate', 'Unhealthy for Sensitive Groups', 'Unhealthy', 'Very Unhealthy', 'Hazardous']
+    sns.countplot(x='AQI Category', data=df_global, order=category_order, ax=ax2, palette='viridis')
+    ax2.set_xlabel("AQI Category")
+    ax2.set_ylabel("Number of Cities")
+    plt.xticks(rotation=30, ha='right')
+    st.pyplot(fig2)
+
+# =====================================================================================
 # --- PAGE 3: INTERACTIVE AQI CLASSIFIER ---
+# =====================================================================================
 elif page == "Interactive AQI Classifier":
     st.title("Interactive Air Quality Index (AQI) Classifier")
     st.markdown("---")
     st.sidebar.header("Input Pollutant Values")
-
-    co_val = st.sidebar.slider("CO AQI Value", 0, 100, 5)
-    ozone_val = st.sidebar.slider("Ozone AQI Value", 0, 300, 50)
-    no2_val = st.sidebar.slider("NO2 AQI Value", 0, 100, 10)
-    pm25_val = st.sidebar.slider("PM2.5 AQI Value", 0, 500, 55)
+    
+    co_val = st.sidebar.slider("CO AQI Value", 0, 100, 5, key="co")
+    ozone_val = st.sidebar.slider("Ozone AQI Value", 0, 300, 50, key="ozone")
+    no2_val = st.sidebar.slider("NO2 AQI Value", 0, 100, 10, key="no2")
+    pm25_val = st.sidebar.slider("PM2.5 AQI Value", 0, 500, 55, key="pm25")
 
     input_data = pd.DataFrame(
         [[co_val, ozone_val, no2_val, pm25_val]],
@@ -76,7 +137,7 @@ elif page == "Interactive AQI Classifier":
         st.warning(f"Predicted AQI Category: **Moderate**")
     else:
         st.error(f"Predicted AQI Category: **{prediction}**")
-    
+
     st.write("Prediction Probabilities:")
     proba_df = pd.DataFrame(prediction_proba, columns=model.classes_)
     st.dataframe(proba_df)
