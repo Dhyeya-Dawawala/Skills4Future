@@ -68,11 +68,10 @@ if model is None:
 
 
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Project Overview", "Global Pollution Insights", "Interactive AQI Classifier"])
-
+page = st.sidebar.radio("Go to", ["Project Overview", "Global Pollution Insights", "Interactive AQI Classifier", "Project Summary"])
 
 if page == "Project Overview":
-    st.title("💨 Comprehensive Air Pollution Analysis Project")
+    st.title("💨 Air Pollution Detection and Predection Project")
     st.markdown("---")
     st.subheader("Welcome to my Machine Learning Internship Project!")
     st.write("This interactive web app showcases an analysis of global air pollution and features an interactive model to predict Air Quality.")
@@ -135,3 +134,21 @@ elif page == "Interactive AQI Classifier":
     st.write("Prediction Probabilities:")
     proba_df = pd.DataFrame(prediction_proba, columns=model.classes_)
     st.dataframe(proba_df)
+    
+    
+    
+elif page == "Project Summary":
+    st.title("Project Summary & Key Findings")
+    st.markdown("---")
+    st.subheader("Key Accomplishments:")
+    st.markdown("""
+        - **Analyzed a global air pollution dataset** to identify pollution hotspots and common air quality categories.
+        - **Built a high-accuracy Random Forest model** (over 99%) to classify the AQI category based on raw pollutant data.
+        - **Identified key drivers of pollution**, finding that PM2.5 is the most significant predictor of poor air quality.
+        - **Developed an interactive web application** using Streamlit to demonstrate the model's predictive power in a user-friendly interface.
+    """)
+    st.subheader("Future Work:")
+    st.markdown("""
+        - Deploy the final application to a cloud platform for public access.
+        - Experiment with other advanced models like Gradient Boosting (LightGBM, XGBoost) to compare performance.
+    """)
