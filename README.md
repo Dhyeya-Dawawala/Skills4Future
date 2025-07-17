@@ -1,12 +1,12 @@
 # Skills4Future
 
-**Team Members**  
-1. Dhyeya Dawawala(Team Lead) | Mobile no.:- 9409384007 | Mail:-dhyeyadawawala@gmail.com
-2. Tejas Panchal | Mobile no.:-9510485133 | Mail:-tejaspanchal040@gmail.com
-3. Purvanshu Machhi | Mobile no.:-7984667847 | Mail:-purvanshu1375@gmail.com
-4. Hemanshu Machhi | Mobile no.:-9157194133 | Mail:-machhihimanshu049@gmail.com
-
-
+**Team Members** 
+<pre>
+1. Dhyeya Dawawala(Team Lead) | Mobile no.:- 9409384007 | Email:- <a href="mailto:dhyeyadawawala@gmail.com">dhyeyadawawala@gmail.com</a>
+2. Tejas Panchal              | Mobile no.:- 9510485133 | Email:- <a href="mailto:tejaspanchal040@gmail.com">tejaspanchal040@gmail.com</a>
+3. Purvanshu Machhi           | Mobile no.:- 7984667847 | Email:- <a href="mailto:purvanshu1375@gmail.com">purvanshu1375@gmail.com</a>
+4. Hemanshu Machhi            | Mobile no.:- 9157194133 | Email:- <a href="mailto:machhihimanshu049@gmail.com">machhihimanshu049@gmail.com</a>
+</pre>
 # Comprehensive Air Pollution Analysis Project
 
 ## Overview
