@@ -6,14 +6,14 @@ from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# --- PAGE CONFIGURATION ---
+
 st.set_page_config(
     page_title="Air Pollution Analysis",
     page_icon="💨",
     layout="wide"
 )
 
-# --- CACHED FUNCTIONS FOR DATA AND MODEL ---
+
 
 @st.cache_data
 def load_data(file_path):
@@ -26,27 +26,27 @@ def train_and_get_model():
     This is the key function. It trains the model ONCE and caches it.
     This guarantees no version mismatch between training and prediction.
     """
-    # Load the training data
+   
     try:
         df_train = load_data('air pollution dataset.csv')
     except FileNotFoundError:
         st.error("Training data 'air pollution dataset.csv' not found in the project folder. Cannot build the app.")
         return None
 
-    # --- Data Prep and Training Logic (from your notebook) ---
+    
     df_train.columns = df_train.columns.str.replace(' ', '_')
     
-    # We use the refined features, without the overall AQI_Value
+    
     features = ['CO_AQI_Value', 'Ozone_AQI_Value', 'NO2_AQI_Value', 'PM2.5_AQI_Value']
     target = 'AQI_Category'
     
-    # Important: Drop rows with missing values in the columns we need
+   
     df_train.dropna(subset=features + [target], inplace=True)
     
     X = df_train[features]
     y = df_train[target]
     
-    # Create and train the Random Forest model
+
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     st.info("Training a new classification model... (This will only happen on the first run)")
     model.fit(X, y)
@@ -54,25 +54,23 @@ def train_and_get_model():
     
     return model
 
-# --- Load everything needed for the app ---
+
 try:
     df_global = load_data('air pollution dataset.csv')
     model = train_and_get_model()
 except Exception as e:
     st.error(f"An error occurred during data loading or model training: {e}")
-    st.stop() # Stop the app if essential components fail to load
+    st.stop() 
 
 if model is None:
     st.stop()
 
 
-# --- SIDEBAR FOR NAVIGATION ---
+
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Project Overview", "Global Pollution Insights", "Interactive AQI Classifier"])
 
-# =====================================================================================
-# --- PAGE 1: PROJECT OVERVIEW ---
-# =====================================================================================
+
 if page == "Project Overview":
     st.title("💨 Comprehensive Air Pollution Analysis Project")
     st.markdown("---")
@@ -80,9 +78,7 @@ if page == "Project Overview":
     st.write("This interactive web app showcases an analysis of global air pollution and features an interactive model to predict Air Quality.")
     st.info("Use the navigation panel on the left to explore the different parts of the project.")
 
-# =====================================================================================
-# --- PAGE 2: GLOBAL POLLUTION INSIGHTS ---
-# =====================================================================================
+
 elif page == "Global Pollution Insights":
     st.title("Global Insights: Comparing Pollution Across Cities")
     st.markdown("---")
@@ -109,9 +105,7 @@ elif page == "Global Pollution Insights":
     plt.xticks(rotation=30, ha='right')
     st.pyplot(fig2)
 
-# =====================================================================================
-# --- PAGE 3: INTERACTIVE AQI CLASSIFIER ---
-# =====================================================================================
+
 elif page == "Interactive AQI Classifier":
     st.title("Interactive Air Quality Index (AQI) Classifier")
     st.markdown("---")
